@@ -14,7 +14,7 @@ import com.hstairs.ppmajal.problem.GroundAction;
 import com.hstairs.ppmajal.problem.PDDLState;
 import com.hstairs.ppmajal.some_computatitional_tool.NumericPlanningGraph;
 
-public class LandmarkCandidateGeneration {
+public class LandmarkExtraction {
 
 	public static PddlDomain domain;
 	public static EPddlProblem problem;
@@ -25,12 +25,14 @@ public class LandmarkCandidateGeneration {
 	public static HashSet<Predicate> landmarks = new HashSet<Predicate>();
 	public static MultiValuedMap<Integer, Predicate> goals = new ArrayListValuedHashMap<>();
 	public static RPG rpg;
-	
+	public static LGG lgg;
+	public static String domainFile;
+	public static String problemFile;
 
-	public static void main(String args[]) throws Exception {
+	public static LGG computeLandmarks(String dF, String pF) throws Exception {
 
-		String domainFile = "./resources/biotope_domain_v2.pddl";
-		String problemFile = "./resources/biotope_problem.pddl";
+		domainFile = dF;
+		problemFile = pF;
 
 		domain = new PddlDomain(domainFile);
 		problem = new EPddlProblem(problemFile, domain.getConstants(), domain.types, domain);
@@ -52,6 +54,9 @@ public class LandmarkCandidateGeneration {
 		System.out.println("Size(F):" + problem.getNumberOfBooleanVariables());
 
 		rpg = new RPG((PDDLState) problem.getInit());
+		
+		lgg = new LGG();
+		lgg.initialize(problem.getGoals().getInvolvedPredicates());
 
 		actions = rpg.computeRelaxedPlan(((PDDLState) problem.getInit()), problem.getGoals(),
 				(Set) problem.getActions());
@@ -59,21 +64,105 @@ public class LandmarkCandidateGeneration {
 		levels = rpg.levels;
 
 		generatePredicateSet();
+		
+		System.out.println("Predicates: "+predicates);
 
 		generateLandmarkCandidates();
 
 		System.out.println("LANDMARK CANDIDATES: ");
 		System.out.println(landmarkCandidates);
-		
+
 		System.out.println("------------------------------------------");
 		evaluateCandidates();
-		
+
 		System.out.println("LANDMARKS: ");
 		System.out.println(landmarks);
+		
+		System.out.println("LGG: ");
+		System.out.println(lgg.nodes);
+		
+		
+		
+		return lgg;
 
 	}
+	
+	
+	//TODO remove, only for testing purposes
+	public static void main(String[] args) throws Exception {
+		
+		domainFile = "./resources/biotope_domain_v2.pddl";
+		problemFile = "./resources/biotope_problem.pddl";
 
-	public static void generateLandmarkCandidates() {
+		domain = new PddlDomain(domainFile);
+		problem = new EPddlProblem(problemFile, domain.getConstants(), domain.types, domain);
+
+		domain.substituteEqualityConditions();
+
+		problem.transformGoal();
+		problem.groundingActionProcessesConstraints();
+
+		System.out.println("Simplification..");
+		// problem.setAction_cost_from_metric(!ignore_metric);
+		problem.simplifyAndSetupInit(true, false);
+
+		System.out.println("Grounding and Simplification finished");
+		System.out.println("|A|:" + problem.getActions().size());
+		System.out.println("|P|:" + problem.getProcessesSet().size());
+		System.out.println("|E|:" + problem.getEventsSet().size());
+		System.out.println("Size(X):" + problem.getNumberOfNumericVariables());
+		System.out.println("Size(F):" + problem.getNumberOfBooleanVariables());
+
+		rpg = new RPG((PDDLState) problem.getInit());
+		
+		lgg = new LGG();
+		lgg.initialize(problem.getGoals().getInvolvedPredicates());
+
+		actions = rpg.computeRelaxedPlan(((PDDLState) problem.getInit()), problem.getGoals(),
+				(Set) problem.getActions());
+
+		levels = rpg.levels;
+
+		generatePredicateSet();
+		
+		System.out.println("Predicates: "+predicates);
+
+		generateLandmarkCandidates();
+
+		System.out.println("LANDMARK CANDIDATES: ");
+		System.out.println(landmarkCandidates);
+
+		System.out.println("------------------------------------------");
+		evaluateCandidates();
+
+		System.out.println("LANDMARKS: ");
+		System.out.println(landmarks);
+		
+		System.out.println("LGG: ");
+		System.out.println(lgg.nodes);
+		
+		Node[] nodess = new Node[6];
+		int i=0;
+		for(Node nn : lgg.getNodes()) {
+			nodess[i++] = nn;
+			
+		}
+		
+		
+		
+		System.out.println("...................................................");
+		
+		System.out.println("GET ALL PREDECESSORS FOR:" +nodess[3].getNode());
+		
+		System.out.println(lgg.getAllPredecessors(nodess[3]));
+		
+		
+		
+	}
+	
+
+	public static void generateLandmarkCandidates() {		
+		
 
 		MultiValuedMap<Integer, Predicate> C = new ArrayListValuedHashMap<>();
 		C = goals;
@@ -90,12 +179,10 @@ public class LandmarkCandidateGeneration {
 
 					MultiValuedMap<Integer, GroundAction> A = new ArrayListValuedHashMap<>();
 
-					// let A be the set of all actions a such that L_dash is element of add(a), and
-					// level(a) = level(L_dash) - 1
+					// let A be the set of all actions a such that L_dash is element of add(a), and level(a) = level(L_dash) - 1
 					for (Entry<Integer, GroundAction> entryA : actions.entries()) {
 
-						if (entryA.getValue().getAddList().getInvolvedPredicates().contains(entryP.getValue())
-								&& entryA.getKey() == (entryP.getKey() - 1)) {
+						if (entryA.getValue().getAddList().getInvolvedPredicates().contains(entryP.getValue()) && entryA.getKey() == (entryP.getKey() - 1)) {
 
 							A.put(entryA.getKey(), entryA.getValue());
 						}
@@ -116,9 +203,10 @@ public class LandmarkCandidateGeneration {
 
 						for (Entry<Integer, GroundAction> a : A.entries()) {
 
-							if (A.size() == 1) {
+							if (A.size() == 1) {				
 
 								temp2.addAll(a.getValue().getPreconditions().getInvolvedPredicates());
+																
 								break;
 							} else {
 
@@ -132,8 +220,21 @@ public class LandmarkCandidateGeneration {
 							}
 
 						}
+						
+						for(Predicate p : temp2) {
+							
+							if(!lgg.containsNode(p)) {
+								
+								System.out.println("Adding node");
+								
+								lgg.addNode(p);
+								lgg.addEdge(p, entryP.getValue());												
+							}									
+						}
 
 						temp.putAll((entryP.getKey() - 1), temp2);
+						
+						System.out.println("Temp:"+temp);
 
 						C_dash.putAll(temp);
 						landmarkCandidates.addAll(temp.values());
@@ -180,41 +281,33 @@ public class LandmarkCandidateGeneration {
 					goals.put(i + 1, p);
 					break;
 				}
-
 			}
-
 		}
-
 	}
 
 	public static void evaluateCandidates() throws CloneNotSupportedException {
 
-		
-
 		for (Predicate p : landmarkCandidates) {
-			
+
 			HashSet<GroundAction> actionss = (HashSet) problem.getActions();
-			
+
 			HashSet<GroundAction> temp = new HashSet<GroundAction>();
-			
-			for (GroundAction ga : actionss) {			
+
+			for (GroundAction ga : actionss) {
 
 				if (ga.getAddList().getInvolvedPredicates().contains(p)) {
 					temp.add(ga);
 				}
 			}
-			
-			actionss.removeAll(temp);			
-			
+
+			actionss.removeAll(temp);
+
 			RPG rpg = new RPG((PDDLState) problem.getInit());
-			
+
 			if (rpg.computeRelaxedPlan(((PDDLState) problem.getInit()), problem.getGoals(), actionss) == null) {
-				
-				landmarks.add(p);				
+
+				landmarks.add(p);
 			}
-
 		}
-
 	}
-
 }
