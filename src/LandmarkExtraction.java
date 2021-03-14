@@ -54,7 +54,7 @@ public class LandmarkExtraction {
 		System.out.println("Size(F):" + problem.getNumberOfBooleanVariables());
 
 		rpg = new RPG((PDDLState) problem.getInit());
-		
+
 		lgg = new LGG();
 		lgg.initialize(problem.getGoals().getInvolvedPredicates());
 
@@ -64,8 +64,8 @@ public class LandmarkExtraction {
 		levels = rpg.levels;
 
 		generatePredicateSet();
-		
-		System.out.println("Predicates: "+predicates);
+
+		System.out.println("Predicates: " + predicates);
 
 		generateLandmarkCandidates();
 
@@ -77,20 +77,17 @@ public class LandmarkExtraction {
 
 		System.out.println("LANDMARKS: ");
 		System.out.println(landmarks);
-		
+
 		System.out.println("LGG: ");
 		System.out.println(lgg.nodes);
-		
-		
-		
+
 		return lgg;
 
 	}
-	
-	
-	//TODO remove, only for testing purposes
+
+	// TODO remove, only for testing purposes
 	public static void main(String[] args) throws Exception {
-		
+
 		domainFile = "./resources/biotope_domain_v2.pddl";
 		problemFile = "./resources/biotope_problem.pddl";
 
@@ -114,7 +111,7 @@ public class LandmarkExtraction {
 		System.out.println("Size(F):" + problem.getNumberOfBooleanVariables());
 
 		rpg = new RPG((PDDLState) problem.getInit());
-		
+
 		lgg = new LGG();
 		lgg.initialize(problem.getGoals().getInvolvedPredicates());
 
@@ -124,8 +121,8 @@ public class LandmarkExtraction {
 		levels = rpg.levels;
 
 		generatePredicateSet();
-		
-		System.out.println("Predicates: "+predicates);
+
+		System.out.println("Predicates: " + predicates);
 
 		generateLandmarkCandidates();
 
@@ -137,32 +134,26 @@ public class LandmarkExtraction {
 
 		System.out.println("LANDMARKS: ");
 		System.out.println(landmarks);
-		
+
 		System.out.println("LGG: ");
 		System.out.println(lgg.nodes);
-		
-		Node[] nodess = new Node[6];
-		int i=0;
-		for(Node nn : lgg.getNodes()) {
-			nodess[i++] = nn;
-			
-		}
-		
-		
-		
-		System.out.println("...................................................");
-		
-		System.out.println("GET ALL PREDECESSORS FOR:" +nodess[3].getNode());
-		
-		System.out.println(lgg.getAllPredecessors(nodess[3]));
-		
-		
-		
-	}
-	
 
-	public static void generateLandmarkCandidates() {		
-		
+		Node[] nodess = new Node[6];
+		int i = 0;
+		for (Node nn : lgg.getNodes()) {
+			nodess[i++] = nn;
+
+		}
+
+		System.out.println("...................................................");
+
+		System.out.println("GET ALL PREDECESSORS FOR:" + nodess[3].getNode());
+
+		System.out.println(lgg.getAllPredecessors(nodess[3]));
+
+	}
+
+	public static void generateLandmarkCandidates() {
 
 		MultiValuedMap<Integer, Predicate> C = new ArrayListValuedHashMap<>();
 		C = goals;
@@ -179,10 +170,12 @@ public class LandmarkExtraction {
 
 					MultiValuedMap<Integer, GroundAction> A = new ArrayListValuedHashMap<>();
 
-					// let A be the set of all actions a such that L_dash is element of add(a), and level(a) = level(L_dash) - 1
+					// let A be the set of all actions a such that L_dash is element of add(a), and
+					// level(a) = level(L_dash) - 1
 					for (Entry<Integer, GroundAction> entryA : actions.entries()) {
 
-						if (entryA.getValue().getAddList().getInvolvedPredicates().contains(entryP.getValue()) && entryA.getKey() == (entryP.getKey() - 1)) {
+						if (entryA.getValue().getAddList().getInvolvedPredicates().contains(entryP.getValue())
+								&& entryA.getKey() == (entryP.getKey() - 1)) {
 
 							A.put(entryA.getKey(), entryA.getValue());
 						}
@@ -203,10 +196,10 @@ public class LandmarkExtraction {
 
 						for (Entry<Integer, GroundAction> a : A.entries()) {
 
-							if (A.size() == 1) {				
+							if (A.size() == 1) {
 
 								temp2.addAll(a.getValue().getPreconditions().getInvolvedPredicates());
-																
+
 								break;
 							} else {
 
@@ -220,21 +213,21 @@ public class LandmarkExtraction {
 							}
 
 						}
-						
-						for(Predicate p : temp2) {
-							
-							if(!lgg.containsNode(p)) {
-								
+
+						for (Predicate p : temp2) {
+
+							if (!lgg.containsNode(p)) {
+
 								System.out.println("Adding node");
-								
+
 								lgg.addNode(p);
-								lgg.addEdge(p, entryP.getValue());												
-							}									
+								lgg.addEdge(p, entryP.getValue());
+							}
 						}
 
 						temp.putAll((entryP.getKey() - 1), temp2);
-						
-						System.out.println("Temp:"+temp);
+
+						System.out.println("Temp:" + temp);
 
 						C_dash.putAll(temp);
 						landmarkCandidates.addAll(temp.values());
@@ -309,5 +302,88 @@ public class LandmarkExtraction {
 				landmarks.add(p);
 			}
 		}
+
+		HashSet<Predicate> notLMs = (HashSet<Predicate>) landmarkCandidates.clone();
+		notLMs.removeAll(landmarks);
+		
+		HashSet<Node> nodesToRemove = new HashSet<Node>();
+
+		for (Predicate p : notLMs) {
+			for (Node n : lgg.getNodes()) {
+
+				if (n.getNode().equals(p)) {
+					
+					nodesToRemove.add(n);			
+
+					// no predecessors or successors
+					if (n.getPrev().isEmpty() && n.getNext().isEmpty()) {
+
+						// fine
+
+					}
+					// no predecessors, only successors
+					else if (n.getPrev().isEmpty() && !n.getNext().isEmpty()) {
+
+						for (Predicate pred : n.getNext()) {
+							for (Node node : lgg.getNodes()) {
+
+								if (pred.equals(node.getNode())) {
+
+									node.getPrev().remove(p);
+								}
+
+							}
+						}
+
+					}
+					// no successors, only predecessors
+					else if (!n.getPrev().isEmpty() && n.getNext().isEmpty()) {
+
+						for (Predicate pred : n.getPrev()) {
+							for (Node node : lgg.getNodes()) {
+
+								if (pred.equals(node.getNode())) {
+
+									node.getNext().remove(p);
+								}
+							}
+						}
+
+					}
+					// in the middle of a chain, predecessors and successors
+					else if (!n.getPrev().isEmpty() && !n.getNext().isEmpty()) {
+
+						for (Node node : lgg.getNodes()) {
+
+							for (Predicate prev : n.getPrev()) {
+
+								if (node.getNode().equals(prev)) {
+
+									node.getNext().remove(p);
+									node.getNext().addAll(n.getNext());
+								}
+
+							}
+
+							for (Predicate next : n.getNext()) {
+
+								if (node.getNode().equals(next)) {
+
+									node.getPrev().remove(p);
+									node.getPrev().addAll(n.getPrev());
+								}
+
+							}
+
+						}
+
+					}
+
+				}
+
+			}
+		}
+		
+		lgg.getNodes().removeAll(nodesToRemove);
 	}
 }

@@ -29,6 +29,11 @@ public class LGG {
 		predicates.add(node);
 
 	}
+	
+	public HashSet<Predicate> getPredicates(){
+		
+		return this.predicates;
+	}
 
 	public void initialize(Collection<Predicate> g) {
 

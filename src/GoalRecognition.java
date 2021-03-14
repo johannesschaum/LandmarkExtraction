@@ -22,8 +22,9 @@ public class GoalRecognition {
 		// for each goal G in G do
 		for (ComplexCondition goal : candidateGoals) {
 
-			LGG LG = candidateGoalsPlusLMs.get(goal);
-			HashSet<Predicate> LI = init;
+			LGG LG = candidateGoalsPlusLMs.get(goal);		
+			HashSet<Predicate> LI = (HashSet<Predicate>) init.clone();
+			LI.retainAll(LG.getPredicates());
 			HashSet<Node> L = new HashSet<Node>();
 			
 			
