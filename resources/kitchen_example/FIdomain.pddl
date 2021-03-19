@@ -1,9 +1,10 @@
 (define (domain combined)
-	(:requirements :adl :action-costs)
+	(:requirements :adl)
 	(:types
 		openobjects nonopenobjects - objects
         part
         walkl
+        objects - object
 	)
     (:constants
         cupboard_bl garbage cupboard_br cupboard_tl cupboard_tm cupboard_tr drawer oven fridge jam_glass jam_glass_2 peanut_butter_glass bread_bag egg_box egg_shella egg_shellb pepper_shaker salt_shaker butter_spray_can oil_bottle brownie_box brownie_bag tap pizza_sauce_can pizza_dough_container cheese_wrapper salad_wrapper crouton_wrapper celery_wrapper cucumber_wrapper carrot_wrapper salami_wrapper salad_sauce_bottle - openobjects
@@ -15,7 +16,7 @@
     (:predicates
 		(is-open ?what - objects)
 		(partially-is-open ?what - objects)
-		(at ?where - walkl)
+		(att ?where - walkl)
         (is-at ?what - objects ?fromto - objects)
         (is-on ?what - objects)
         (in ?what - objects ?to - objects)
@@ -52,9 +53,9 @@
 		:parameters (?what - openobjects)
 		:precondition (and
 							(imply (= ?what fridge)
-							    (at fridge_place))
+							    (att fridge_place))
 							(imply (not (= ?what fridge))
-							    (at counter_place))
+							    (att counter_place))
                             (not (is-open ?what))
                             (or
 								(exists (?o - openobjects) (and (is-at ?what ?o) (is-open ?o)))
@@ -106,9 +107,9 @@
 		:parameters (?what - objects ?how - part)
 		:precondition (and
 							(imply (= ?what fridge)
-							    (at fridge_place))
+							    (att fridge_place))
 							(imply (not (= ?what fridge))
-							    (at counter_place))
+							    (att counter_place))
                             (not (is-open ?what))
                             (or
 								(exists (?o - openobjects) (and (is-at ?what ?o) (is-open ?o)))
@@ -124,9 +125,9 @@
         :parameters (?what - openobjects)
         :precondition (and
                             (imply (= ?what fridge)
-							    (at fridge_place))
+							    (att fridge_place))
 							(imply (not (= ?what fridge))
-							    (at counter_place))
+							    (att counter_place))
                             (is-open ?what)
                             (or
 								(exists (?o - openobjects) (and (is-at ?what ?o) (is-open ?o)))
@@ -189,13 +190,13 @@
     (:action walk
 		:parameters (?from ?to - walkl)
 		:precondition (and
-							(at ?from)
-							(not (at ?to))
+							(att ?from)
+							(not (att ?to))
 						)
 		:effect (and
-					(at ?to)
+					(att ?to)
 					(increase (total-cost) 1)
-					(not (at ?from))
+					(not (att ?from))
 				)
 	)
     (:action take
@@ -204,9 +205,9 @@
 							(is-at ?what ?from)
 							(take-pair ?what ?from)
 							(imply (= ?from fridge)
-							    (at fridge_place))
+							    (att fridge_place))
 							(imply (not (= ?from fridge))
-							    (at counter_place))
+							    (att counter_place))
 							(imply (exists (?o - openobjects) (= ?from ?o))
 									(is-open ?from)
 								)
@@ -223,9 +224,9 @@
 							(is-at ?what hands)
 							(take-pair ?what ?to)
 							(imply (= ?to fridge)
-							    (at fridge_place))
+							    (att fridge_place))
 							(imply (not (= ?to fridge))
-							    (at counter_place))
+							    (att counter_place))
 							(imply (exists (?o - openobjects) (= ?to ?o))
 									(is-open ?to)
 								)
@@ -240,7 +241,7 @@
 		:parameters (?what - objects)
 		:precondition (and
 							(not (is-on ?what))
-							(at counter_place)
+							(att counter_place)
 							(turn-single ?what)
 						)
 		:effect (and
@@ -252,7 +253,7 @@
       		:parameters (?what - objects)
       		:precondition (and
       						(is-on ?what)
-      						(at counter_place)
+      						(att counter_place)
       						(turn-single ?what)
       					)
       		:effect (and
@@ -560,7 +561,7 @@
     (:action rinse
     	:parameters (?what - objects)
         :precondition (and
-                        (at counter_place)
+                        (att counter_place)
                         (rinse-single ?what)
                         (is-at ?what hands)
                     )

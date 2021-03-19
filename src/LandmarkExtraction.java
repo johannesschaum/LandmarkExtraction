@@ -88,8 +88,12 @@ public class LandmarkExtraction {
 	// TODO remove, only for testing purposes
 	public static void main(String[] args) throws Exception {
 
-		domainFile = "./resources/biotope_domain_v2.pddl";
-		problemFile = "./resources/biotope_problem.pddl";
+//		domainFile = "./resources/biotope_domain_v2.pddl";
+//		problemFile = "./resources/biotope_problem.pddl";
+		
+		domainFile = "./resources/kitchen_example/FIdomain.pddl";
+		problemFile = "./resources/kitchen_example/FIproblem.pddl";
+		
 
 		domain = new PddlDomain(domainFile);
 		problem = new EPddlProblem(problemFile, domain.getConstants(), domain.types, domain);

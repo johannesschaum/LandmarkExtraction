@@ -1,7 +1,7 @@
 (define (problem combined-default)
     (:domain combined)
     (:init
-        (at counter_place)
+        (att counter_place)
         (= (total-cost) 0)
         (in water tap)
 		(in brownie_mix brownie_bag)
